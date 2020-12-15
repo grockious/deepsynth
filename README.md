@@ -8,7 +8,6 @@ DeepSynth: Program Synthesis for Automatic Task Segmentation in
 Deep Reinforcement Learning [Extended Version]. 
 https://arxiv.org/pdf/1911.10244.pdf
 ~~~
-<br/>
 
 Note that this is a first version of the codebase and will be updated soon.
 
