@@ -9,7 +9,7 @@ Codebase for the work presented in ""
 
 ## Training
 
-To train DeepSynth agent on Montezuma’s Revenge run training.py in the root folder:
-'python3 training.py'
+To train DeepSynth agent on Montezuma’s Revenge run training.py in the root folder:<br>
+`python3 training.py
 
 
