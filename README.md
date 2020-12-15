@@ -3,9 +3,12 @@ A framework for effective training of deep Reinforcement Learning (RL) agents wh
 
 Based on work presented in 'DeepSynth: Automata Synthesis for Automatic Task Segmentation in Deep Reinforcement Learning' (https://arxiv.org/pdf/1911.10244.pdf)
 ~~~
-Hasanbeig, M.; Yogananda Jeppu, N.; Abate, A.; Melham, T.; and Kroening, D. 2019b. 
-DeepSynth: Program Synthesis for Automatic Task Segmentation in 
-Deep Reinforcement Learning [Extended Version]. 
+@article{deepsynth,
+title={{DeepSynth: Program Synthesis for Automatic Task Segmentation in Deep Reinforcement Learning}},
+author={Hasanbeig, Mohammadhosein and Yogananda Jeppu, Natasha and Abate, Alessandro and Melham, Tom and Kroening, Daniel},
+journal={arXiv preprint arXiv:1911.10244},
+year={2019}
+} 
 ~~~
 
 Note that this is a first version of the codebase and will be updated soon.
