@@ -1,4 +1,4 @@
-Note: the current codebase is under code refactoring and a final package will be released upon AAAI proceedings publication.  
+Note: the current codebase is under code refactoring and the final package will be released upon AAAI proceedings publication.  
 
 # DeepSynth
 DeepSynth is a general method for effective training of deep Reinforcement Learning (RL) agents when the reward is sparse and non-Markovian, but at the same time progress towards the reward requires achieving an unknown sequence of high-level objectives. The framework uses human-interpretable automata, synthesised from trace data generated through exploration of the environment by the deep RL agent to uncover this sequential structure.
