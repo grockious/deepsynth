@@ -18,7 +18,7 @@ class MineCraft():
     toolshed = 7
     obstacles = 8
 
-    def __init__(self, world=2, vanishing=0):
+    def __init__(self, world=2, vanishing=1):
         self._world = world  # select the environment
         self._vanishing = vanishing  # set 1 when objects disappear upon visit and 0 otherwise
         self._x_limit, self._y_limit = self.layout(world).shape
@@ -78,7 +78,8 @@ class MineCraft():
                 task_num, trace = self.task_extractor(traces[ep_n, 0:it_n])
                 if task_num != 0:
                     if list(trace) not in useful_traces[task_num]:
-                        useful_traces[task_num].append(self.remove_duplicates(list(trace)))
+                        # useful_traces[task_num].append(self.remove_duplicates(list(trace)))
+                        useful_traces[task_num].append(list(trace))
                     useful_paths[task_num].append(paths[ep_n, 0:it_n, :].tolist())
                     break
                 next_state = self.take_action(current_state, random.randint(0, self.num_actions - 1))
@@ -87,11 +88,12 @@ class MineCraft():
             np.unique(useful_traces[i])
         return useful_traces, useful_paths
 
-    def reward(self, automaton_state):
-        if automaton_state == 100:
-            return round(10 + random.random()/100, 2)
+    def reward(self, task_num, traces):
+        check_task_num, _ = self.task_extractor(traces)
+        if task_num == check_task_num:
+            return round(10 + random.random() / 100, 2)
         else:
-            return round(random.random()/100, 2)
+            return round(random.random() / 100, 2)
 
     def automaton(self, task, current_automaton_state, label):
         tasks = {1: [[4, 2], [2, 3], [7, 100]],
@@ -115,33 +117,30 @@ class MineCraft():
                 return current_automaton_state
 
     def exploration(self, task_number, episode_number, max_it_number):
-        task_keys = [[4, 2, 7], [3, 7], [2, 3, 4, 7], [2, 6], [3, 4, 6], [4, 2, 6]]
+        # task_keys = [[4, 2, 7], [3, 7], [2, 3, 4, 7], [2, 6], [3, 4, 6], [4, 2, 6]]
         # range(1, len(task_keys[task_number - 1]))
-        sar_dict = ddict(list)
+        sars= []
+        traces = np.zeros([episode_number, max_it_number, 1], dtype=int)
         for ep_n in range(episode_number):
             current_state = list(self.initialiser())
-            current_state.append(1)
             current_layout = self.layout(self._world)
-            iter_number = 1
-            while current_state[2] != 100 and iter_number < max_it_number:
-                iter_number += 1
+            iter_number = 0
+            while self.reward(task_number, traces[ep_n, 0:iter_number]) < 9 \
+                    and iter_number < max_it_number:
                 if self._vanishing == 1 and \
                         current_layout[current_state[0]][current_state[1]] != self.workbench and \
                         current_layout[current_state[0]][current_state[1]] != self.toolshed:
                     current_layout[current_state[0]][current_state[1]] = self.neutral
                 action = random.randint(0, self.num_actions - 1)
                 next_state_2d = list(self.take_action(current_state[0:2], action))
-                next_automaton_state = self.automaton(task_number,
-                                                      current_state[2],
-                                                      current_layout[next_state_2d[0]][next_state_2d[1]])
-                next_state_2d.append(next_automaton_state)
-                sar = [current_state[0], current_state[1], current_state[2],
+                sar = [current_state[0], current_state[1],
                        action,
-                       next_state_2d[0], next_state_2d[1], next_state_2d[2],
-                       self.reward(next_state_2d[2])]
-                sar_dict[current_state[2]].append(sar)
+                       next_state_2d[0], next_state_2d[1],
+                       self.reward(task_number, traces[ep_n, 0:iter_number])]
+                sars.append(sar)
                 current_state = next_state_2d
-        return sar_dict
+            iter_number += 1
+        return sars
 
     def take_action(self, current_state, action_indx):
         next_state = current_state + self.direction_deltas[action_indx]
@@ -160,7 +159,7 @@ class MineCraft():
         return next_state
 
     def task_extractor(self, trace):
-        old_trace = trace
+        old_trace = trace.copy()
         trace = trace[trace > 1]
         # first task [self.wood, self.toolshed]
         # second task [self.grass, self.toolshed]

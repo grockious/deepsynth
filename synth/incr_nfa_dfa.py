@@ -348,7 +348,7 @@ def nfa_traverse(model,trace, vis=[],find_vis=False):
         return (1,[],vis)
     return (1,[])
 
-def nfa_to_dfa(nfa):
+def nfa_to_dfa(nfa, full_event_id):
     def find_eq_states_to_merge(full_trans):
         states = list(full_trans.keys())
         event_len = len(full_trans[states[0]])
@@ -383,7 +383,8 @@ def nfa_to_dfa(nfa):
                     continue
 
                 same_out = (all([x in outgoing[o1] for x in outgoing[o2]]) \
-                    and all([x in incoming[o1] for x in incoming[o2]]))
+                    and all([x in incoming[o1] for x in incoming[o2]])) or \
+                    (outgoing[o1] == outgoing[o2])
                 if same_out:
                     temp.append(o2)
 
@@ -393,7 +394,7 @@ def nfa_to_dfa(nfa):
 
         return to_be_merged, outgoing, incoming
 
-    def check_if_subset(o1, o2, outgoing):
+    def check_if_subset(o1, o2, outgoing, incoming, full_trans):
         same_out = all([x in outgoing[o1] for x in outgoing[o2]])
         return same_out
 
@@ -406,10 +407,11 @@ def nfa_to_dfa(nfa):
             for y in x[1:]:
                 invalid_merge = False
                 for i in outgoing[y]:
-                    if full_trans[replace_with][i] != full_trans[y][i]:
-                        if not check_if_subset(full_trans[replace_with][i], full_trans[y][i], outgoing):
-                            invalid_merge = True
-                            break
+                    if full_trans[y][i] != '-' and full_trans[replace_with][i] != full_trans[y][i]:
+                        if not check_if_subset(full_trans[replace_with][i], full_trans[y][i], outgoing, incoming, full_trans):
+                            if not (full_trans[replace_with][i] == y and full_trans[y][i] == replace_with):
+                                invalid_merge = True
+                                break
                 if not invalid_merge:
                     for key in full_trans:
                         for i in range(len(full_trans[key])):
@@ -522,7 +524,7 @@ def nfa_to_dfa(nfa):
 
         return to_be_merged
 
-    # print("\n\nConverting NFA to DFA..........")
+    print("\n\nConverting NFA to DFA..........")
 
     states = [x[0] for x in nfa]
     [states.append(x[2]) for x in nfa]
@@ -557,9 +559,19 @@ def nfa_to_dfa(nfa):
         if to_be_merged:
             full_trans = merge_states(full_trans, to_be_merged)
 
+        full_trans_after_minimise = copy.deepcopy(full_trans)
+
         to_be_merged, outgoing, incoming = find_eq_states_to_merge(full_trans)
         if to_be_merged:
             full_trans = subset_states_merge(full_trans, to_be_merged, outgoing, incoming)
+
+            dfa, num_states = dict2t(full_trans)
+            (f,trace) = nfa_traverse(dfa, full_event_id)
+            if not f:
+                # print(colored("[WARNING] Invalid merge, Reverting back....\n",'magenta'))
+                full_trans = copy.deepcopy(full_trans_after_minimise)
+            # else:
+            #     print(colored("Valid merge, Continue....\n",'green'))
 
     return full_trans
 
@@ -728,7 +740,7 @@ def make_model(full_events, model, var, hyperparams, num_states, input_dict, sta
 
     start_index = -1
     input_dict = text_preprocess(start_index,hyperparams,var)
-    input_dict_store = input_dict
+    input_dict_store = copy.deepcopy(input_dict)
     
     while(True):
         vis = [1]
@@ -747,8 +759,12 @@ def make_model(full_events, model, var, hyperparams, num_states, input_dict, sta
             print(colored(trace,'red'))
             print('\n')
 
-            input_dict_store['seq_input_uniq'] = [trace]
-            input_dict['event_id'] = trace
+            if len(trace)-10 > 1:
+                input_dict_store['seq_input_uniq'] = [trace[len(trace)-10:]]
+                input_dict['event_id'] = trace[len(trace)-10:]
+            else:
+                input_dict_store['seq_input_uniq'] = [trace]
+                input_dict['event_id'] = trace
 
             (found_ce,ce_global) = get_ce(input_dict,var,init_model)
     
@@ -786,7 +802,7 @@ def convert_to_dfa_plot(full_events, model_gen, input_dict, num_states, hyperpar
 
     start_index = -1
     input_dict = text_preprocess(start_index, hyperparams, var)
-    input_dict_store = input_dict
+    input_dict_store = copy.deepcopy(input_dict)
 
     while(True):
         vis = [1]
@@ -796,7 +812,7 @@ def convert_to_dfa_plot(full_events, model_gen, input_dict, num_states, hyperpar
 
         do_dfa = 'y'
         if do_dfa == 'y':
-            trans_dict = nfa_to_dfa(final_model_gen)
+            trans_dict = nfa_to_dfa(final_model_gen, input_dict_store['event_id'])
             final_model_gen, num_states = dict2t(trans_dict)
             # print("Length of trace: " + str(len(input_dict_store['event_id'])))
 

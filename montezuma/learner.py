@@ -607,7 +607,7 @@ if __name__ == "__main__":
     dfa_model = []
     num_states, var, input_dict, hyperparams = dfa_init()
     print("initialise")
-    iter_num = 0
+    synth_iter_num = 0
 
     # Main loop
     try:
@@ -687,10 +687,10 @@ if __name__ == "__main__":
                                     input_dict,
                                     hyperparams,
                                     start_time,
-                                    iter_num)
+                                    synth_iter_num)
                                 dfa_states = list(set([dfa_transitions[0] for dfa_transitions in processed_dfa] +
                                                       [dfa_transitions[2] for dfa_transitions in processed_dfa]))
-                                iter_num = iter_num + 1
+                                synth_iter_num = synth_iter_num + 1
                                 set_of_episode_traces = [episode_trace]
 
                             # Create DQN modules if necessary
